@@ -55,7 +55,7 @@ load_dotenv()
 
 
 cloudinary.config(
-    cloud_name="kulmiye",
+    cloud_name="dzhairplt",
     api_key="597738172555213",
     api_secret="x4UXHFVqzH4Oq_MeBV4VGYoZHns"
 )
