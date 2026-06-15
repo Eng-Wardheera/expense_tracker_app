@@ -78,16 +78,34 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-4 align-items-center">
-                                    <div class="col-lg-4"><label class="fw-semibold">Role: </label></div>
-                                    <div class="col-lg-8">
-                                        <select class="form-control" name="role">
-                                            <option value="superadmin" {% if user.role == 'superadmin' %}selected{% endif %}>Superadmin</option>
-                                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
-                                            <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
-                                        </select>
-                                    </div>
-                                </div>
+                           <div class="row mb-4 align-items-center">
+    <div class="col-lg-4">
+        <label class="fw-semibold">Role:</label>
+    </div>
+
+    <div class="col-lg-8">
+        <select class="form-control" name="role">
+
+            {% if current_user.role == 'superadmin' %}
+                <option value="superadmin"
+                    {% if user.role == 'superadmin' %}selected{% endif %}>
+                    Superadmin
+                </option>
+            {% endif %}
+
+            <option value="admin"
+                {% if user.role == 'admin' %}selected{% endif %}>
+                Admin
+            </option>
+
+            <option value="user"
+                {% if user.role == 'user' %}selected{% endif %}>
+                User
+            </option>
+
+        </select>
+    </div>
+</div>
 
                                 <div class="row mb-4 align-items-center">
                                     <div class="col-lg-4"><label class="fw-semibold">Country: </label></div>

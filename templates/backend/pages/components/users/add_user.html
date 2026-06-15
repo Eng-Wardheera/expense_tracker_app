@@ -136,11 +136,15 @@
                                         <label class="fw-semibold">Role: </label>
                                     </div>
                                     <div class="col-lg-8">
-                                        <select class="form-control" name="role" data-select2-selector="privacy">
+                                        <select class="form-control" name="role">
                                             <option value="" disabled selected>Select Role</option>
-                                            <option value="superadmin" data-icon="feather-lock">SuperAdmin</option>
-                                            <option value="admin" data-icon="feather-lock">Admin</option>
-                                            <option value="user" data-icon="feather-user-check">User</option>
+
+                                            {% if current_user.role == 'superadmin' %}
+                                                <option value="superadmin">SuperAdmin</option>
+                                            {% endif %}
+
+                                            <option value="admin">Admin</option>
+                                            <option value="user">User</option>
                                         </select>
                                     </div>
                                 </div>
