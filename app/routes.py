@@ -393,6 +393,7 @@ def add_user():
         countries=countries
     )
 
+
 @bp.route('/edit-user/<user_id>', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
@@ -463,46 +464,28 @@ def edit_user(user_id):
 
             updated_data["password"] = generate_password_hash(password)
 
-        # ================= PHOTO =================
+        # ================= CLOUDINARY PHOTO =================
         file = request.files.get('photo')
 
         if file and file.filename:
 
-            project_root = os.path.abspath(os.getcwd())
+            old_public_id = raw_user.get("photo_public_id")
 
             # delete old image
-            old_photo = raw_user.get("photo")
+            if old_public_id:
+                try:
+                    cloudinary.uploader.destroy(old_public_id)
+                except Exception:
+                    pass
 
-            if old_photo:
-                old_path = os.path.join(
-                    project_root,
-                    "static",
-                    old_photo
-                )
-
-                if os.path.exists(old_path):
-                    try:
-                        os.remove(old_path)
-                    except Exception:
-                        pass
-
-            # save new image
-            upload_dir = os.path.join(
-                project_root,
-                "static",
-                "backend",
-                "uploads",
-                "users"
+            # upload new image
+            result = cloudinary.uploader.upload(
+                file,
+                folder="users"
             )
 
-            os.makedirs(upload_dir, exist_ok=True)
-
-            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-            file_path = os.path.join(upload_dir, filename)
-
-            file.save(file_path)
-
-            updated_data["photo"] = f"backend/uploads/users/{filename}"
+            updated_data["photo"] = result["secure_url"]
+            updated_data["photo_public_id"] = result["public_id"]
 
         # ================= UPDATE DB =================
         mongo.db.users.update_one(
@@ -517,7 +500,6 @@ def edit_user(user_id):
         "backend/pages/components/users/edit_user.html",
         user=user
     )
-
 
 @bp.route('/delete-user/<user_id>', methods=['POST'])
 @login_required
