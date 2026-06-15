@@ -44,120 +44,167 @@
         padding:15px;
     }
 
-    /* Grid */
+/* GRID - MOBILE FIRST */
+.categories{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:15px;
+    padding: 10px;
+}
+
+/* CARD */
+.card{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 3px 10px rgba(0,0,0,0.08);
+    transition:0.3s ease;
+    cursor:pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+/* IMAGE */
+.card img{
+    width:100%;
+    height:140px;
+    object-fit:cover;
+}
+
+/* BODY */
+.card-body{
+    padding:12px;
+}
+
+.card-title{
+    font-size:15px;
+    font-weight:bold;
+    color:#222;
+    text-align:center;
+}
+
+/* SMALL MOBILE (optional improvement) */
+@media (max-width: 480px){
     .categories{
-        display:grid;
-        grid-template-columns:repeat(2,1fr);
-        gap:15px;
-    }
-
-    .card{
-        background:white;
-        border-radius:18px;
-        overflow:hidden;
-        box-shadow:0 3px 10px rgba(0,0,0,0.08);
-        transition:0.3s;
-        cursor:pointer;
-    }
-
-    .card:hover{
-        transform:translateY(-5px);
+        grid-template-columns: 1fr;
     }
 
     .card img{
-        width:100%;
-        height:150px;
-        object-fit:cover;
+        height:160px;
+    }
+}
+
+/* TABLET */
+@media (min-width:768px){
+    .categories{
+        grid-template-columns:repeat(3, 1fr);
     }
 
-    .card-body{
-        padding:12px;
+    .card img{
+        height:180px;
+    }
+}
+
+/* DESKTOP */
+@media (min-width:1024px){
+    .categories{
+        grid-template-columns:repeat(4, 1fr);
     }
 
-    .card-title{
-        font-size:16px;
-        font-weight:bold;
-        color:#222;
+    .card img{
+        height:200px;
     }
+}
 
-    /* Tablet */
-    @media (min-width:768px){
-        .categories{
-            grid-template-columns:repeat(3,1fr);
-        }
 
-        .card img{
-            height:180px;
-        }
-    }
+.header{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    background:linear-gradient(135deg,#0d4c7d,#1b6ba8);
+    color:white;
+    padding:15px 20px;
+    border-radius:14px;
+    flex-wrap: wrap; /* important for mobile */
+}
 
-    /* Desktop */
-    @media (min-width:1024px){
-        .categories{
-            grid-template-columns:repeat(4,1fr);
-        }
+/* LOGO */
+.logo{
+    width: clamp(45px, 8vw, 70px);
+    height: auto;
+    object-fit: contain;
+    background:white;
+    padding:6px;
+    border-radius:10px;
+}
 
-        .card img{
-            height:200px;
-        }
-    }
+/* TEXT */
+.header .text h1{
+    font-size: clamp(16px, 3vw, 22px);
+    margin-bottom:4px;
+}
+
+.header .text p{
+    font-size: clamp(12px, 2vw, 13px);
+    opacity:0.9;
+}
+
 </style>
 
 </head>
 <body>
 
-    <div class="header">
-        <h1>KULMIYE ELECTRONICS</h1>
+ <div class="header">
+
+    <img src="{{ url_for('static', filename='frontend/images/logo.png') }}" class="logo">
+
+    <div class="text">
+        <h1>T-TECH ELECTRONICS</h1>
         <p>Computer & Technology Parts Store</p>
     </div>
 
+</div>
+
+
+
     <div class="container">
 
-        <div class="categories">
+    <div class="categories">
 
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">Laptop Parts</div>
-                </div>
+    {% for category in categories %}
+
+    <a href="{{ url_for('main.single_category', category_id=category.id) }}"
+       class="card"
+       style="text-decoration:none; color:inherit;">
+
+        {% if category.image %}
+
+        <img src="{{ url_for('static', filename=category.image) }}"
+             alt="{{ category.name }}">
+
+        {% else %}
+
+        <img src="{{ url_for('static', filename='frontend/images/no-image.jpg') }}"
+             alt="{{ category.name }}">
+
+        {% endif %}
+
+        <div class="card-body">
+            <div class="card-title">
+                {{ category.name }}
             </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1612810806695-30f7a8258391?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">Printer Parts</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">Desktop Parts</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1563770660941-10a63607692e?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">All In One Parts</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">Chargers</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600" alt="">
-                <div class="card-body">
-                    <div class="card-title">Accessories</div>
-                </div>
-            </div>
-
         </div>
+
+    </a>
+
+    {% endfor %}
+
+</div>
+
 
     </div>
 

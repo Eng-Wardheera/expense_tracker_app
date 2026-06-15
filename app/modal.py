@@ -115,12 +115,16 @@ class Category:
         self.id = str(self.data.get("_id"))
         self.name = self.data.get("name")
         self.image = self.data.get("image")
+        self.created_at = self.data.get("created_at")
+        self.updated_at = self.data.get("updated_at")
 
     def to_dict(self):
         return {
             "_id": self.id,
             "name": self.name,
-            "image": self.image
+            "image": self.image,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
         }
 
     def __repr__(self):
@@ -144,6 +148,9 @@ class Product:
         self.brand = self.data.get("brand")
         self.sku = self.data.get("sku")
         self.status = self.data.get("status", True)
+        self.created_at = self.data.get("created_at")
+        self.updated_at = self.data.get("updated_at")
+
 
     def is_in_stock(self):
         return self.stock > 0
@@ -163,7 +170,10 @@ class Product:
             "image": self.image,
             "brand": self.brand,
             "sku": self.sku,
-            "status": self.status
+            "status": self.status,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+
         }
 
     def __repr__(self):

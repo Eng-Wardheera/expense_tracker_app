@@ -41,11 +41,22 @@
                         <li class="nxl-item nxl-hasmenu">
                             <a href="javascript:void(0);" class="nxl-link">
                                 <span class="nxl-micon"><i class="feather-cast"></i></span>
-                                <span class="nxl-mtext">Projects</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                                <span class="nxl-mtext">Categories</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
                             </a>
                             <ul class="nxl-submenu">
-                                <li class="nxl-item"><a class="nxl-link" href="">All Projects</a></li>
-                                <li class="nxl-item"><a class="nxl-link" href="">Add Project </a></li>
+                                <li class="nxl-item"><a class="nxl-link" href="{{ url_for('main.all_categories') }}">All Categories</a></li>
+                                <li class="nxl-item"><a class="nxl-link" href="{{ url_for('main.add_category') }}">Add Category </a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nxl-item nxl-hasmenu">
+                            <a href="javascript:void(0);" class="nxl-link">
+                                <span class="nxl-micon"><i class="feather-cast"></i></span>
+                                <span class="nxl-mtext">Products</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                            </a>
+                            <ul class="nxl-submenu">
+                                <li class="nxl-item"><a class="nxl-link" href="{{ url_for('main.all_products') }}">All Products</a></li>
+                                <li class="nxl-item"><a class="nxl-link" href="{{ url_for('main.add_product') }}">Add Product </a></li>
                             </ul>
                         </li>
 

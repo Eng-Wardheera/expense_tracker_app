@@ -16,7 +16,7 @@ from app import ALLOWED_EXTENSIONS
 from app.extensions import mongo
 from datetime import datetime, timedelta
 
-from app.modal import User, UserRole
+from app.modal import Category, Product, User, UserRole
 
 
 bp = Blueprint('main', __name__)
@@ -50,11 +50,55 @@ def create_guest_session(mongo):
 @bp.route('/', methods=['GET'])
 def index():
 
+    categories = [
+        Category(cat)
+        for cat in mongo.db.categories.find().sort("name", 1)
+    ]
+
     return render_template(
         "frontend/home/index.html",
-       
+        categories=categories
     )
 
+
+@bp.route('/category/<category_id>')
+def single_category(category_id):
+
+    category = mongo.db.categories.find_one({
+        "_id": ObjectId(category_id)
+    })
+
+    if not category:
+        return abort(404)
+
+    products = [
+        Product(p)
+        for p in mongo.db.products.find({
+            "category_id": ObjectId(category_id)
+        })
+    ]
+
+    return render_template(
+        "frontend/pages/single_category.html",
+        category=Category(category),
+        products=products
+    )
+
+
+@bp.route('/product/<product_id>')
+def product_detail(product_id):
+
+    product = mongo.db.products.find_one({
+        "_id": ObjectId(product_id)
+    })
+
+    if not product:
+        return abort(404)
+
+    return render_template(
+        "frontend/pages/product_detail.html",
+        product=Product(product)
+    )
 
 
 
@@ -380,6 +424,533 @@ def all_users():
     
     # 3. U dir template-ka
     return render_template('backend/pages/components/users/all_users.html', users=users)
+
+
+
+
+@bp.route('/add-category', methods=['GET', 'POST'])
+@login_required
+def add_category():
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    if request.method == 'POST':
+
+        name = request.form.get('name')
+
+        # ================= VALIDATION =================
+        if not name:
+            flash("Category name waa required!", "danger")
+            return redirect(url_for('main.add_category'))
+
+        existing = mongo.db.categories.find_one({"name": name})
+
+        if existing:
+            flash("Category-kan hore ayuu u jiraa!", "danger")
+            return redirect(url_for('main.add_category'))
+
+        # ================= IMAGE UPLOAD =================
+        image_path = ""
+
+        file = request.files.get('image')
+
+        if file and file.filename:
+
+            project_root = os.path.abspath(os.getcwd())
+
+            upload_dir = os.path.join(
+                project_root,
+                'static',
+                'backend',
+                'uploads',
+                'categories'
+            )
+
+            os.makedirs(upload_dir, exist_ok=True)
+
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            file_path = os.path.join(upload_dir, filename)
+
+            file.save(file_path)
+
+            image_path = f"backend/uploads/categories/{filename}"
+
+        # ================= CREATE CATEGORY =================
+        new_category = {
+            "name": name,
+            "image": image_path,
+            "created_at": datetime.utcnow()
+        }
+
+        mongo.db.categories.insert_one(new_category)
+
+        flash(f"Category '{name}' si guul leh ayaa loo daray!", "success")
+        return redirect(url_for('main.add_category'))
+
+    return render_template(
+        "backend/pages/components/categories/add_category.html"
+    )
+
+
+@bp.route('/all/categories')
+@login_required
+def all_categories():
+
+    categories = mongo.db.categories.find().sort("created_at", -1)
+
+    category_list = [Category(cat) for cat in categories]
+
+    return render_template(
+        "backend/pages/components/categories/all_categories.html",
+        categories=category_list
+    )
+
+
+
+
+@bp.route('/edit-category/<category_id>', methods=['GET', 'POST'])
+@login_required
+def edit_category(category_id):
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    category = mongo.db.categories.find_one({
+        "_id": ObjectId(category_id)
+    })
+
+    if not category:
+        flash("Category lama helin!", "danger")
+        return redirect(url_for('main.all_categories'))
+
+    if request.method == 'POST':
+
+        name = request.form.get('name')
+
+        update_data = {
+            "name": name,
+            "updated_at": datetime.utcnow()
+        }
+
+        file = request.files.get('image')
+
+        if file and file.filename:
+
+            project_root = os.path.abspath(os.getcwd())
+
+            upload_dir = os.path.join(
+                project_root,
+                'static',
+                'backend',
+                'uploads',
+                'categories'
+            )
+
+            os.makedirs(upload_dir, exist_ok=True)
+
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+
+            file_path = os.path.join(upload_dir, filename)
+
+            file.save(file_path)
+
+            image_path = f"backend/uploads/categories/{filename}"
+
+            # delete old image
+            old_image = category.get("image")
+
+            if old_image:
+                old_file = os.path.join(
+                    project_root,
+                    'static',
+                    old_image
+                )
+
+                if os.path.exists(old_file):
+                    try:
+                        os.remove(old_file)
+                    except:
+                        pass
+
+            update_data["image"] = image_path
+
+        mongo.db.categories.update_one(
+            {"_id": ObjectId(category_id)},
+            {"$set": update_data}
+        )
+
+        flash("Category si guul leh ayaa loo cusboonaysiiyay!", "success")
+
+        return redirect(url_for('main.all_categories'))
+
+    return render_template(
+        "backend/pages/components/categories/edit_category.html",
+        category=Category(category)
+    )
+
+
+
+@bp.route('/delete-category/<category_id>', methods=['POST'])
+@login_required
+def delete_category(category_id):
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    category = mongo.db.categories.find_one({
+        "_id": ObjectId(category_id)
+    })
+
+    if not category:
+        flash("Category lama helin!", "danger")
+        return redirect(url_for('main.all_categories'))
+
+    # delete image
+    image_path = category.get("image")
+
+    if image_path:
+
+        project_root = os.path.abspath(os.getcwd())
+
+        full_path = os.path.join(
+            project_root,
+            'static',
+            image_path
+        )
+
+        if os.path.exists(full_path):
+            try:
+                os.remove(full_path)
+            except:
+                pass
+
+    mongo.db.categories.delete_one({
+        "_id": ObjectId(category_id)
+    })
+
+    flash("Category si guul leh ayaa loo tirtiray!", "success")
+
+    return redirect(url_for('main.all_categories'))
+
+
+
+
+
+@bp.route('/add-product', methods=['GET', 'POST'])
+@login_required
+def add_product():
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    categories = [
+        Category(cat)
+        for cat in mongo.db.categories.find().sort("name", 1)
+    ]
+
+    if request.method == 'POST':
+
+        category_id = request.form.get('category_id')
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = float(request.form.get('price', 0))
+        stock = int(request.form.get('stock', 0))
+        brand = request.form.get('brand')
+        sku = request.form.get('sku')
+
+        status = (
+            True
+            if request.form.get('status') == '1'
+            else False
+        )
+
+        # ================= VALIDATION =================
+
+        if not category_id:
+            flash("Category dooro!", "danger")
+            return redirect(url_for('main.add_product'))
+
+        if not name:
+            flash("Product name waa required!", "danger")
+            return redirect(url_for('main.add_product'))
+
+        existing = mongo.db.products.find_one({
+            "name": name
+        })
+
+        if existing:
+            flash("Product-kan hore ayuu u jiraa!", "danger")
+            return redirect(url_for('main.add_product'))
+
+        # ================= IMAGE UPLOAD =================
+
+        image_path = ""
+
+        file = request.files.get('image')
+
+        if file and file.filename:
+
+            project_root = os.path.abspath(os.getcwd())
+
+            upload_dir = os.path.join(
+                project_root,
+                'static',
+                'backend',
+                'uploads',
+                'products'
+            )
+
+            os.makedirs(upload_dir, exist_ok=True)
+
+            filename = (
+                f"{uuid.uuid4().hex}_"
+                f"{secure_filename(file.filename)}"
+            )
+
+            file_path = os.path.join(
+                upload_dir,
+                filename
+            )
+
+            file.save(file_path)
+
+            image_path = (
+                f"backend/uploads/products/{filename}"
+            )
+
+        # ================= SAVE PRODUCT =================
+
+        product = {
+
+            "category_id": ObjectId(category_id),
+
+            "name": name,
+            "description": description,
+
+            "price": price,
+            "stock": stock,
+
+            "image": image_path,
+
+            "brand": brand,
+            "sku": sku,
+
+            "status": status,
+
+            "created_at": datetime.utcnow(),
+            "updated_at": None
+        }
+
+        mongo.db.products.insert_one(product)
+
+        flash(
+            f"{name} si guul leh ayaa loo daray!",
+            "success"
+        )
+
+        return redirect(url_for('main.all_products'))
+
+    return render_template(
+        "backend/pages/components/products/add_product.html",
+        categories=categories
+    )
+
+
+
+@bp.route('/all/products')
+@login_required
+def all_products():
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    products = []
+
+    for item in mongo.db.products.find().sort("created_at", -1):
+
+        product = Product(item)
+
+        category = mongo.db.categories.find_one({
+            "_id": ObjectId(product.category_id)
+        })
+
+        product.category_name = (
+            category.get("name")
+            if category else "N/A"
+        )
+
+        products.append(product)
+
+    return render_template(
+        "backend/pages/components/products/all_products.html",
+        products=products
+    )
+
+
+
+
+
+@bp.route('/edit-product/<product_id>', methods=['GET', 'POST'])
+@login_required
+def edit_product(product_id):
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    product = mongo.db.products.find_one({
+        "_id": ObjectId(product_id)
+    })
+
+    if not product:
+        flash("Product lama helin!", "danger")
+        return redirect(url_for('main.all_products'))
+
+    categories = [
+        Category(cat)
+        for cat in mongo.db.categories.find().sort("name", 1)
+    ]
+
+    if request.method == 'POST':
+
+        category_id = request.form.get('category_id')
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = float(request.form.get('price', 0))
+        stock = int(request.form.get('stock', 0))
+        brand = request.form.get('brand')
+        sku = request.form.get('sku')
+
+        status = (
+            True
+            if request.form.get('status') == '1'
+            else False
+        )
+
+        update_data = {
+            "category_id": ObjectId(category_id),
+            "name": name,
+            "description": description,
+            "price": price,
+            "stock": stock,
+            "brand": brand,
+            "sku": sku,
+            "status": status,
+            "updated_at": datetime.utcnow()
+        }
+
+        file = request.files.get("image")
+
+        if file and file.filename:
+
+            project_root = os.path.abspath(os.getcwd())
+
+            upload_dir = os.path.join(
+                project_root,
+                "static",
+                "backend",
+                "uploads",
+                "products"
+            )
+
+            os.makedirs(upload_dir, exist_ok=True)
+
+            filename = (
+                f"{uuid.uuid4().hex}_"
+                f"{secure_filename(file.filename)}"
+            )
+
+            file_path = os.path.join(
+                upload_dir,
+                filename
+            )
+
+            file.save(file_path)
+
+            image_path = (
+                f"backend/uploads/products/{filename}"
+            )
+
+            old_image = product.get("image")
+
+            if old_image:
+
+                old_file = os.path.join(
+                    project_root,
+                    "static",
+                    old_image
+                )
+
+                if os.path.exists(old_file):
+                    try:
+                        os.remove(old_file)
+                    except:
+                        pass
+
+            update_data["image"] = image_path
+
+        mongo.db.products.update_one(
+            {"_id": ObjectId(product_id)},
+            {"$set": update_data}
+        )
+
+        flash(
+            "Product si guul leh ayaa loo cusboonaysiiyay!",
+            "success"
+        )
+
+        return redirect(url_for('main.all_products'))
+
+    return render_template(
+        "backend/pages/components/products/edit_product.html",
+        product=Product(product),
+        categories=categories
+    )
+
+
+@bp.route('/delete-product/<product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+
+    if current_user.role != 'superadmin':
+        return abort(403)
+
+    product = mongo.db.products.find_one({
+        "_id": ObjectId(product_id)
+    })
+
+    if not product:
+        flash("Product lama helin!", "danger")
+        return redirect(url_for('main.all_products'))
+
+    image = product.get("image")
+
+    if image:
+
+        project_root = os.path.abspath(os.getcwd())
+
+        image_path = os.path.join(
+            project_root,
+            "static",
+            image
+        )
+
+        if os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+            except:
+                pass
+
+    mongo.db.products.delete_one({
+        "_id": ObjectId(product_id)
+    })
+
+    flash(
+        "Product si guul leh ayaa loo tirtiray!",
+        "success"
+    )
+
+    return redirect(url_for('main.all_products'))
 
 
 

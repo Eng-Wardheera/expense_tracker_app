@@ -1,0 +1,129 @@
+{% extends 'backend/home/base.html' %}
+
+{% block title %}Add New Category | Management System{% endblock %}
+
+{% block content %}
+
+<div class="main-content mt-4">
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="card border-top-0">
+
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs flex-wrap w-100 text-center customers-nav-tabs">
+                    <li class="nav-item flex-fill border-top">
+                        <a href="#infoTab"
+                           class="nav-link active"
+                           data-bs-toggle="tab">
+                            Category Info
+                        </a>
+                    </li>
+
+                    <li class="nav-item flex-fill border-top">
+                        <a href="#mediaTab"
+                           class="nav-link"
+                           data-bs-toggle="tab">
+                            Category Image
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tab-content">
+
+                <!-- CATEGORY INFO -->
+                <div class="tab-pane fade show active" id="infoTab">
+                    <div class="card-body">
+
+                        <div class="row mb-4">
+                            <div class="col-lg-4">
+                                <label class="fw-bold">
+                                    Category Name:
+                                </label>
+                            </div>
+
+                            <div class="col-lg-8">
+                                <input type="text"
+                                       class="form-control"
+                                       name="name"
+                                       required>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CATEGORY IMAGE -->
+                <div class="tab-pane fade" id="mediaTab">
+                    <div class="card-body">
+
+                        <div class="row mb-4">
+
+                            <div class="col-lg-4">
+                                <label class="fw-bold">
+                                    Category Image:
+                                </label>
+                            </div>
+
+                            <div class="col-lg-8">
+
+                                <input type="file"
+                                       class="form-control"
+                                       name="image"
+                                       id="imageInput"
+                                       accept="image/*">
+
+                                <img id="imagePreview"
+                                     src="#"
+                                     alt="Preview"
+                                     style="max-width:200px; margin-top:10px; display:none; border-radius:10px;">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card-footer text-center">
+                <button type="submit" class="btn btn-primary">
+                    <i class="feather-save me-1"></i>
+                    Save Category
+                </button>
+            </div>
+
+        </div>
+
+    </form>
+</div>
+
+<script>
+
+document.getElementById("imageInput").addEventListener("change", function(){
+
+    const file = this.files[0];
+    const preview = document.getElementById("imagePreview");
+
+    if(file){
+
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            preview.src = e.target.result;
+            preview.style.display = "block";
+        };
+
+        reader.readAsDataURL(file);
+
+    }else{
+        preview.src = "#";
+        preview.style.display = "none";
+    }
+
+});
+
+</script>
+
+{% endblock %}

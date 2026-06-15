@@ -1,0 +1,281 @@
+{% extends 'backend/home/base.html' %}
+
+{% block title %}All Products | Management System{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Products Management</h5>
+        </div>
+
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('main.dashboard') }}">
+                    Home
+                </a>
+            </li>
+
+            <li class="breadcrumb-item">
+                All Products
+            </li>
+        </ul>
+    </div>
+
+    <div class="page-header-right ms-auto">
+        <a href="{{ url_for('main.add_product') }}"
+           class="btn btn-primary">
+
+            <i class="feather-plus me-1"></i>
+            Add Product
+
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+
+    <div class="row">
+
+        <div class="col-lg-12">
+
+            <div class="card stretch stretch-full">
+
+                <div class="card-header">
+                    <h5 class="card-title">
+                        Products List
+                    </h5>
+                </div>
+
+                <div class="card-body p-0">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover" id="productList">
+
+                            <thead class="thead-light">
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th width="80">
+                                        Image
+                                    </th>
+
+                                    <th>
+                                        Product
+                                    </th>
+
+                                    <th>
+                                        Category
+                                    </th>
+
+                                    <th>
+                                        Price
+                                    </th>
+
+                                    <th>
+                                        Stock
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Created
+                                    </th>
+
+                                    <th class="text-end">
+                                        Actions
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                            {% if products %}
+
+                                {% for product in products %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ loop.index }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if product.image %}
+
+                                        <img
+                                            src="{{ url_for('static', filename=product.image) }}"
+                                            class="img-thumbnail"
+                                            style="width:50px;height:50px;object-fit:cover;"
+                                            alt="{{ product.name }}">
+
+                                        {% else %}
+
+                                        <div class="avatar-text bg-soft-primary text-primary rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width:50px;height:50px;">
+
+                                            {{ product.name[0]|upper }}
+
+                                        </div>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        <div>
+
+                                            <span class="fw-bold d-block">
+                                                {{ product.name }}
+                                            </span>
+
+                                            {% if product.brand %}
+                                            <small class="text-muted">
+                                                {{ product.brand }}
+                                            </small>
+                                            {% endif %}
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        {{ product.category_name }}
+                                    </td>
+
+                                    <td>
+                                        ${{ "%.2f"|format(product.price) }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if product.stock > 0 %}
+
+                                        <span class="badge bg-soft-success text-success">
+                                            {{ product.stock }}
+                                        </span>
+
+                                        {% else %}
+
+                                        <span class="badge bg-soft-danger text-danger">
+                                            Out of Stock
+                                        </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if product.status %}
+
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+
+                                        {% else %}
+
+                                        <span class="badge bg-danger">
+                                            Inactive
+                                        </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ product.created_at.strftime('%Y-%m-%d') if product.created_at else 'N/A' }}
+
+                                    </td>
+
+                                    <td class="text-end">
+
+                                        <div class="hstack gap-1 justify-content-end">
+
+                                            <a href="#"
+                                               class="avatar-text avatar-md bg-soft-info text-info rounded-circle"
+                                               data-bs-toggle="tooltip"
+                                               title="View">
+
+                                                <i class="feather-eye"></i>
+
+                                            </a>
+
+                                            <a href="{{ url_for('main.edit_product', product_id=product.id) }}"
+                                               class="avatar-text avatar-md bg-soft-primary text-primary rounded-circle"
+                                               data-bs-toggle="tooltip"
+                                               title="Edit">
+
+                                                <i class="feather-edit"></i>
+
+                                            </a>
+
+                                            <form action="{{ url_for('main.delete_product', product_id=product.id) }}"
+                                                  method="POST"
+                                                  class="d-inline">
+
+                                                <button type="submit"
+                                                        class="avatar-text avatar-md bg-soft-danger text-danger rounded-circle border-0"
+                                                        onclick="return confirm('Ma hubtaa inaad tirtirayso product-kan?')">
+
+                                                    <i class="feather-trash-2"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                            {% else %}
+
+                                <tr>
+
+                                    <td colspan="9"
+                                        class="text-center p-5">
+
+                                        <i class="feather-package fs-1 text-muted d-block mb-3"></i>
+
+                                        <span class="text-muted">
+                                            No products found.
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endif %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
