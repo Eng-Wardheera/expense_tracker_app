@@ -16,7 +16,7 @@ from app import ALLOWED_EXTENSIONS
 from app.extensions import mongo
 from datetime import datetime, timedelta
 
-from app.modal import Category, Product, User, UserRole
+from app.modal import Category, Order, Product, User, UserRole
 
 
 bp = Blueprint('main', __name__)
@@ -189,10 +189,59 @@ def forbidden(error):
 @bp.route("/dashboard")
 @login_required
 def dashboard():
+
+    # ❌ role guard
     if current_user.role not in ['superadmin', 'admin']:
-        return abort(403) # ama redirect(url_for('login'))
-        
-    return render_template("backend/home/dashbaord.html", user=current_user)
+        return abort(403)
+
+    # ================= USERS =================
+    total_users = mongo.db.users.count_documents({})
+    total_admins = mongo.db.users.count_documents({"role": "admin"})
+    total_customers = mongo.db.users.count_documents({"role": "user"})
+
+    # ================= PRODUCTS =================
+    total_products = mongo.db.products.count_documents({})
+
+    total_stock_result = mongo.db.products.aggregate([
+        {"$group": {"_id": None, "total_stock": {"$sum": "$stock"}}}
+    ])
+    total_stock_result = list(total_stock_result)
+    total_stock = total_stock_result[0]["total_stock"] if total_stock_result else 0
+
+    # ================= ORDERS =================
+
+    # ✔️ use separate queries (IMPORTANT FIX)
+    orders_cursor = mongo.db.orders.find()
+    orders = [Order(o) for o in orders_cursor]
+
+    total_income = sum(float(o.total or 0) for o in orders if o.payment_status == "paid")
+    total_unpaid = sum(float(o.total or 0) for o in orders if o.payment_status != "paid")
+
+    total_orders = len(orders)
+
+    # ✔️ NEW CURSOR FOR RECENT (DO NOT reuse old one)
+    recent_orders = list(
+        mongo.db.orders.find().sort("created_at", -1).limit(5)
+    )
+
+    return render_template(
+        "backend/home/dashbaord.html",
+        user=current_user,
+
+        total_users=total_users,
+        total_admins=total_admins,
+        total_customers=total_customers,
+
+        total_products=total_products,
+        total_stock=total_stock,
+
+        total_income=total_income,
+        total_unpaid=total_unpaid,
+        total_orders=total_orders,
+
+        recent_orders=recent_orders
+    )
+
 
 
 @bp.route("/profile")

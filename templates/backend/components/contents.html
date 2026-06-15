@@ -1,439 +1,143 @@
   <div class="row">
 
-    <!-- INCOME -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">
-                        {% if current_user.role == 'customer' %}
-                            My Payments
-                        {% else %}
-                            Total Income
-                        {% endif %}
-                    </h6>
-                    <h3 class="fw-bold mb-0">
-                        ${{ total_income or 0 }}
-                    </h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-dollar-sign fs-4"></i>
+ 
+
+        <!-- USERS -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Users</h6>
+                    <h3 class="fw-bold">{{ total_users }}</h3>
+                    <small class="text-muted">
+                        Admins: {{ total_admins }} | Customers: {{ total_customers }}
+                    </small>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- UNPAID -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">
-                        {% if current_user.role == 'customer' %}
-                            My Balance
-                        {% else %}
-                            Unpaid Amount
-                        {% endif %}
-                    </h6>
-                    <h3 class="fw-bold mb-0 text-danger">
-                        ${{ total_unpaid or 0 }}
-                    </h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-alert-circle fs-4 text-danger"></i>
+        <!-- PRODUCTS -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Products</h6>
+                    <h3 class="fw-bold">{{ total_products }}</h3>
+                    <small class="text-muted">Stock: {{ total_stock }}</small>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- JOURNEYS -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">
-                        {% if current_user.role == 'customer' %}
-                            My Journeys
-                        {% else %}
-                            Total Journeys
-                        {% endif %}
-                    </h6>
-                    <h3 class="fw-bold mb-0">
-                        {{ total_journeys or 0 }}
-                    </h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-map fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ADMIN / STAFF ONLY -->
-    {% if current_user.role in ['admin','user'] %}
-
-    <!-- CUSTOMERS -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Customers</h6>
-                    <h3 class="fw-bold mb-0">{{ total_users }}</h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-users fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- STAFF -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Staff</h6>
-                    <h3 class="fw-bold mb-0">{{ total_staff }}</h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-user-check fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- DRIVERS -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Drivers</h6>
-                    <h3 class="fw-bold mb-0">{{ total_drivers }}</h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-truck fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AIRPLANES -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Airplanes</h6>
-                    <h3 class="fw-bold mb-0">{{ total_airplanes }}</h3>
-                </div>
-                <div class="icon-box bg-light rounded-circle p-3">
-                    <i class="feather-navigation fs-4"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {% endif %}
-
-
-
-
-                    <!-- [Conversion Rate] end -->
-                    <!-- [Payment Records] start -->
-                   <!-- [Payment Records] start -->
-                    <div class="col-xxl-8">
-                        <div class="card stretch stretch-full">
-                            <div class="card-header">
-                                <h5 class="card-title">Payment Record</h5>
-                            </div>
-                            <div class="card-body custom-card-action p-0">
-                                <div id="payment-records-chart"></div>
-                            </div>
-                            <div class="card-footer">
-                                <div class="row g-4">
-
-                                    <!-- Awaiting -->
-                                    <div class="col-lg-3">
-                                        <div class="p-3 border border-dashed rounded">
-                                            <div class="fs-12 text-muted mb-1">Awaiting</div>
-                                            <h6 class="fw-bold text-dark">${{ awaiting_amount or 0 }}</h6>
-                                            <div class="progress mt-2 ht-3">
-                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ (awaiting_amount / total_revenue * 100) if total_revenue else 0 }}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Completed -->
-                                    <div class="col-lg-3">
-                                        <div class="p-3 border border-dashed rounded">
-                                            <div class="fs-12 text-muted mb-1">Completed</div>
-                                            <h6 class="fw-bold text-dark">${{ completed_amount or 0 }}</h6>
-                                            <div class="progress mt-2 ht-3">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ (completed_amount / total_revenue * 100) if total_revenue else 0 }}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Rejected -->
-                                    <div class="col-lg-3">
-                                        <div class="p-3 border border-dashed rounded">
-                                            <div class="fs-12 text-muted mb-1">Partial / Rejected</div>
-                                            <h6 class="fw-bold text-dark">${{ rejected_amount or 0 }}</h6>
-                                            <div class="progress mt-2 ht-3">
-                                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (rejected_amount / total_revenue * 100) if total_revenue else 0 }}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Total Revenue -->
-                                    <div class="col-lg-3">
-                                        <div class="p-3 border border-dashed rounded">
-                                            <div class="fs-12 text-muted mb-1">Revenue</div>
-                                            <h6 class="fw-bold text-dark">${{ total_revenue or 0 }}</h6>
-                                            <div class="progress mt-2 ht-3">
-                                                <div class="progress-bar bg-dark" role="progressbar" style="width: 100%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
+        <!-- INCOME -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">
+                            {% if user.role == 'customer' %}
+                                My Payments
+                            {% else %}
+                                Total Income
+                            {% endif %}
+                        </h6>
+                        <h3 class="fw-bold mb-0">
+                            ${{ total_income }}
+                        </h3>
                     </div>
-                    <!-- [Payment Records] end -->
+                    <div class="text-success fs-3">
+                        <i class="feather-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- UNPAID -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">
+                            {% if user.role == 'customer' %}
+                                My Balance
+                            {% else %}
+                                Unpaid Amount
+                            {% endif %}
+                        </h6>
+                        <h3 class="fw-bold text-danger mb-0">
+                            ${{ total_unpaid }}
+                        </h3>
+                    </div>
+                    <div class="text-danger fs-3">
+                        <i class="feather-alert-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <script>
-                    document.addEventListener("DOMContentLoaded", function () {
+        <!-- ORDERS -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Orders</h6>
+                    <h3 class="fw-bold">{{ total_orders }}</h3>
+                </div>
+            </div>
+        </div>
 
-                        var awaiting = {{ awaiting_amount or 0 }};
-                        var completed = {{ completed_amount or 0 }};
-                        var rejected = {{ rejected_amount or 0 }};
-                        var totalRevenue = {{ total_revenue or 0 }};
+    </div>
 
-                        var months = [new Date().toLocaleString('default', { month: 'short' })]; // only current month
-                        var awaitingMonthly = [awaiting];
-                        var completedMonthly = [completed];
-                        var rejectedMonthly = [rejected];
+    <!-- RECENT SECTION -->
+    <div class="row mt-4">
+        <div class="col-12">
 
-                        var options = {
-                            chart: {
-                                height: 380,
-                                type: 'line',
-                                stacked: false,
-                                toolbar: { show: false }
-                            },
-                            stroke: { width: [2,2,2], curve: 'smooth' },
-                            colors: ["#E74C3C", "#2ECC71", "#3498DB"],
-                            series: [
-                                { name: 'Payment Rejected', type: 'bar', data: rejectedMonthly },
-                                { name: 'Payment Completed', type: 'line', data: completedMonthly },
-                                { name: 'Awaiting Payment', type: 'bar', data: awaitingMonthly }
-                            ],
-                            xaxis: { categories: months },
-                            yaxis: {
-                                labels: { formatter: function(val){ return "$" + val.toFixed(0) } }
-                            },
-                            fill: { opacity: [0.85, 0.25, 1] },
-                            tooltip: { y: { formatter: function(val){ return "$" + val.toFixed(2) } } },
-                            legend: { show: true, position: "top" }
-                        };
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Recent Orders</h5>
+                </div>
 
-                        var chart = new ApexCharts(document.querySelector("#payment-records-chart"), options);
-                        chart.render();
-                    });
+                <div class="card-body">
 
-                    </script>
+                    {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
 
-                    <!-- [Payment Records] end -->
-                    <!-- [Total Sales] start -->
-                    <div class="col-xxl-4">
-                        <div class="card stretch stretch-full overflow-hidden">
-                            <div class="bg-primary text-white">
-                                <div class="p-4">
-                                    <span class="badge bg-light text-primary text-dark float-end">12%</span>
-                                    <div class="text-start">
-                                        <h4 class="text-reset">${{ total_revenue or 0 }}</h4>
-                                        <p class="text-reset m-0">Total Sales</p>
-                                    </div>
-                                </div>
-                                <div id="total-sales-color-graph"></div>
-                            </div>
-                            <div class="card-body">
-                                {% for journey in journeys_sales %}
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="hstack gap-3">
-                                        <div class="avatar-image avatar-lg p-2 rounded">
-                                            {% if journey.photo %}
-                                                <img src="{{ url_for('static', filename=journey.photo) }}" alt="{{ journey.customer_name }}" class="img-fluid user-avtar" />
-                                            {% else %}
-                                                <img src="{{ url_for('static', filename='backend/uploads/images/no_image.jpg') }}" alt="user-image" class="img-fluid user-avtar" />
-                                            {% endif %}
-                                        </div>
-                                        <div>
-                                            <a href="javascript:void(0);" class="d-block">{{journey.customer_name }} {{ journey.title }}</a>
-                                            <span class="fs-12 text-muted">{{ journey.category or 'General' }}</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold text-dark">${{ journey.amount or 0 }}</div>
-                                        <div class="fs-12 text-end">{{ journey.projects_count or 1 }} Items</div>
-                                    </div>
-                                </div>
-                                {% if not loop.last %}
-                                <hr class="border-dashed my-3" />
-                                {% endif %}
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>{{ order._id }}</td>
+                                    <td>{{ order.status }}</td>
+                                    <td>
+                                        {% if order.payment_status == "paid" %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Unpaid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ order.total }}</td>
+                                    <td>{{ order.created_at }}</td>
+                                </tr>
                                 {% endfor %}
-                            </div>
-                            <a href="javascript:void(0);" class="card-footer fs-11 fw-bold text-uppercase text-center py-4">Full Details</a>
-                        </div>
+                            </tbody>
+
+                        </table>
                     </div>
-                    <!-- [Total Sales] end -->
+                    {% else %}
+                        <p class="text-muted">No recent orders found.</p>
+                    {% endif %}
 
-                    <!-- [Total Sales] end !-->
-                    <!-- [Mini] start -->
-                   
-                  
-                  
-                    <!-- [Mini] end !-->
-                 
-                    <!-- [Latest Leads] start -->
-                    <div class="col-xxl-8">
-                        <div class="card stretch stretch-full">
-                            <div class="card-header">
-                                <h5 class="card-title">Latest Leads</h5>
-                                <div class="card-header-action">
-                                    <div class="card-header-btn">
-                                        <div data-bs-toggle="tooltip" title="Delete">
-                                            <a href="javascript:void(0);" class="avatar-text avatar-xs bg-danger" data-bs-toggle="remove"> </a>
-                                        </div>
-                                        <div data-bs-toggle="tooltip" title="Refresh">
-                                            <a href="javascript:void(0);" class="avatar-text avatar-xs bg-warning" data-bs-toggle="refresh"> </a>
-                                        </div>
-                                        <div data-bs-toggle="tooltip" title="Maximize/Minimize">
-                                            <a href="javascript:void(0);" class="avatar-text avatar-xs bg-success" data-bs-toggle="expand"> </a>
-                                        </div>
-                                    </div>
-                                    <div class="dropdown">
-                                        <a href="javascript:void(0);" class="avatar-text avatar-sm" data-bs-toggle="dropdown" data-bs-offset="25, 25">
-                                            <div data-bs-toggle="tooltip" title="Options">
-                                                <i class="feather-more-vertical"></i>
-                                            </div>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-at-sign"></i>New</a>
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-calendar"></i>Event</a>
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-bell"></i>Snoozed</a>
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-trash-2"></i>Deleted</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-settings"></i>Settings</a>
-                                            <a href="javascript:void(0);" class="dropdown-item"><i class="feather-life-buoy"></i>Tips & Tricks</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body custom-card-action p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead>
-                                            <tr class="border-b">
-                                                <th scope="row">Users</th>
-                                                <th>Proposal</th>
-                                                <th>Date</th>
-                                                <th>Status</th>
-                                                <th class="text-end">Actions</th>
-                                            </tr>
-                                        </thead>
-                                      <tbody>
-                                        {% for journey in latest_journeys %}
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="avatar-image">
-                                                        <img src="{{ url_for('static', filename=journey.photo) }}" alt="{{ journey.customer_name }}" class="img-fluid" />
-                                                    </div>
-                                                    <a href="javascript:void(0);">
-                                                        <span class="d-block">{{ journey.customer_name }}</span>
-                                                        <span class="fs-12 d-block fw-normal text-muted">{{ journey.customer_email }}</span>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-gray-200 text-dark">{{ journey.proposal }}</span>
-                                            </td>
-                                            <td>{{ journey.date }}</td>
-                                            <td>
-                                                <span class="badge 
-                                                    {% if journey.status == 'completed' %} bg-soft-success text-success
-                                                    {% elif journey.status == 'ongoing' %} bg-soft-primary text-primary
-                                                    {% elif journey.status == 'cancelled' %} bg-soft-warning text-warning
-                                                    {% else %} bg-gray-200 text-dark {% endif %}">
-                                                    {{ journey.status.capitalize() }}
-                                                </span>
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="javascript:void(0);"><i class="feather-more-vertical"></i></a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                        </tbody>
-
-                                    </table>
-                                </div>
-                            </div>
-                         
-                        </div>
-                    </div>
-
-                    <!-- [Latest Leads] end -->
-                    <!--! BEGIN: [Upcoming Schedule] !-->
-                  <div class="col-xxl-4">
-    <div class="card stretch stretch-full">
-        <div class="card-header">
-            <h5 class="card-title">Upcoming Schedule</h5>
-        </div>
-        <div class="card-body">
-            {% for s in upcoming_schedules %}
-            <div class="p-3 border border-dashed rounded-3 mb-3">
-                <div class="d-flex justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
-                        <!-- Date -->
-                        <div class="wd-50 ht-50 bg-soft-primary text-primary lh-1 d-flex align-items-center justify-content-center flex-column rounded-2 schedule-date">
-                            <span class="fs-18 fw-bold mb-1 d-block">{{ s.departure_time[:2] }}</span>
-                            <span class="fs-10 fw-semibold text-uppercase d-block">{{ s.departure_time[3:6] }}</span>
-                        </div>
-
-                        <!-- Flight Details -->
-                        <div class="text-dark">
-                            <a href="javascript:void(0);" class="fw-bold mb-2 text-truncate-1-line">
-                                Flight {{ s.flight_number }} 
-                                ({{ s.departure_airport_name }}, {{ s.departure_city }} → 
-                                 {{ s.arrival_airport_name }}, {{ s.arrival_city }})
-                            </a>
-                            <span class="fs-11 fw-normal text-muted text-truncate-1-line">
-                                {{ s.departure_time }} - {{ s.arrival_time }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="badge 
-                        {% if s.status == 'Scheduled' %} bg-soft-primary text-primary
-                        {% elif s.status == 'Delayed' %} bg-soft-warning text-warning
-                        {% elif s.status == 'Cancelled' %} bg-soft-danger text-danger
-                        {% elif s.status == 'Completed' %} bg-soft-success text-success
-                        {% else %} bg-gray-200 text-dark {% endif %}">
-                        {{ s.status }}
-                    </div>
                 </div>
             </div>
-            {% endfor %}
+
         </div>
-        <a href="javascript:void(0);" class="card-footer fs-11 fw-bold text-uppercase text-center py-4">Upcoming Schedule</a>
-    </div>
-</div>
 
-                    <!--! END: [Upcoming Schedule] !-->
 
-                  
-                 
-                </div>
+
+
+               
