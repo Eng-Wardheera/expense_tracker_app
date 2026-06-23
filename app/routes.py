@@ -264,6 +264,27 @@ def dashboard():
         mongo.db.orders.find().sort("created_at", -1).limit(5)
     )
 
+    # ================= PRODUCTS =================
+    total_products = mongo.db.products.count_documents({})
+
+    # Xisaabinta: (stock * price) mid kasta oo la isku daray
+    inventory_value_result = mongo.db.products.aggregate([
+        {
+            "$project": {
+                "item_value": {"$multiply": ["$stock", "$price"]}
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total_inventory_value": {"$sum": "$item_value"}
+            }
+        }
+    ])
+    
+    inventory_val_list = list(inventory_value_result)
+    total_inventory_value = inventory_val_list[0]["total_inventory_value"] if inventory_val_list else 0
+
     return render_template(
         "backend/home/dashbaord.html",
         user=current_user,
@@ -279,7 +300,9 @@ def dashboard():
         total_unpaid=total_unpaid,
         total_orders=total_orders,
 
-        recent_orders=recent_orders
+        recent_orders=recent_orders,
+        total_products=total_products,
+        total_inventory_value=total_inventory_value
     )
 
 
