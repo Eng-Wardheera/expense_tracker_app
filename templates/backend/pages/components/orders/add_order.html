@@ -1,0 +1,199 @@
+{% extends 'backend/home/base.html' %}
+
+{% block title %}Add New Order | Management System{% endblock %}
+
+{% block content %}
+<div class="main-content mt-4">
+    <form id="orderForm" method="POST">
+        <div class="card">
+            <div class="card-header bg-white"><h5 class="mb-0">New Order</h5></div>
+            <div class="card-body">
+                <div class="row mb-4 align-items-center">
+                    <div class="col-lg-4"><label class="fw-bold">Customer:</label></div>
+                    <div class="col-lg-7">
+                        <select name="user_id" id="customerSelect" class="form-select" required>
+                            <option value="">Select Customer</option>
+                            {% for user in customers %}<option value="{{ user._id }}">{{ user.username }} ({{ user.phone }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-1"><button type="button" class="btn btn-outline-primary w-100" onclick="openModal()">+</button></div>
+                </div>
+
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered" id="orderItemsTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <select name="product_id" class="form-select product-select" onchange="calculateRow(this)">
+                                        <option value="" data-price="0" data-stock="0">Select Product</option>
+                                        {% for product in products %}
+                                        <option value="{{ product._id }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">
+                                            {{ product.name }} (Stock: {{ product.stock }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><span class="row-price">0</span></td>
+                                <td><input type="number" name="qty" class="form-control qty-input" value="1" min="1" oninput="calculateRow(this)"></td>
+                                <td><span class="row-total">0</span></td>
+                                <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success btn-sm" id="addRow">+ Add Product</button>
+                    <h4 class="mt-3">Grand Total: $<span id="grandTotal">0</span></h4>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-4"><label class="fw-bold">Payment Method:</label></div>
+                    <div class="col-lg-8">
+                        <select name="payment_method" class="form-select">
+                            <option value="cash">Cash</option>
+                            <option value="bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center"><button type="submit" class="btn btn-primary px-5">Save Order</button></div>
+        </div>
+    </form>
+</div>
+
+<div id="addCustomerModal" class="my-modal">
+    <div class="my-modal-content">
+        <h5 class="mb-3">Add New Customer</h5>
+        <input type="text" id="custName" class="my-input" placeholder="Full Name" required>
+        <input type="email" id="custEmail" class="my-input" placeholder="Email">
+        <input type="text" id="custPhone" class="my-input" placeholder="Phone Number">
+        <div style="margin-top: 20px; text-align: right;">
+            <button class="my-btn-close" onclick="closeModal()">Close</button>
+            <button class="my-btn-save" id="saveCustomerBtn">Save Customer</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .my-modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+    .my-modal-content { background-color: #fff; margin: 10% auto; padding: 25px; width: 400px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .my-input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
+    .my-btn-save { background-color: #0d6efd; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; }
+    .my-btn-close { background-color: #6c757d; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; }
+</style>
+
+<script>
+    // --- 1. Logic-ka xisaabinta oo leh validation ---
+    function calculateRow(element) {
+        const row = element.closest('tr');
+        const select = row.querySelector('.product-select');
+        const stock = parseInt(select.selectedOptions[0].getAttribute('data-stock')) || 0;
+        const price = parseFloat(select.selectedOptions[0].getAttribute('data-price')) || 0;
+        const qtyInput = row.querySelector('.qty-input');
+        let qty = parseInt(qtyInput.value) || 0;
+
+        // Validation: Hubi in qty uusan stock-ga dhaafin
+        if (qty > stock) {
+            alert("Fadlan ogow: Waxaad dooratay badeecad ka badan tiradii ku jirtay bakhaarka (Stock: " + stock + ")");
+            qty = stock;
+            qtyInput.value = stock;
+        }
+        if (qty < 1) { qty = 1; qtyInput.value = 1; }
+
+        const total = price * qty;
+        row.querySelector('.row-price').innerText = price.toFixed(2);
+        row.querySelector('.row-total').innerText = total.toFixed(2);
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        let grandTotal = 0;
+        document.querySelectorAll('.row-total').forEach(t => grandTotal += parseFloat(t.innerText));
+        document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
+    }
+
+    // --- 2. Row Addition ---
+    document.getElementById('addRow').addEventListener('click', function() {
+        const table = document.getElementById('orderItemsTable').getElementsByTagName('tbody')[0];
+        const newRow = table.rows[0].cloneNode(true);
+        newRow.querySelector('.row-total').innerText = '0';
+        newRow.querySelector('.row-price').innerText = '0';
+        newRow.querySelector('.qty-input').value = '1';
+        table.appendChild(newRow);
+    });
+
+    // Remove row
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-row')) {
+            if(document.querySelectorAll('#orderItemsTable tbody tr').length > 1) {
+                e.target.closest('tr').remove();
+                calculateGrandTotal();
+            }
+        }
+    });
+
+    // --- 3. Save Customer ---
+    document.getElementById('saveCustomerBtn').addEventListener('click', function() {
+        const btn = this;
+        btn.innerText = "Loading...";
+        const custData = {
+            name: document.getElementById('custName').value,
+            email: document.getElementById('custEmail').value,
+            phone: document.getElementById('custPhone').value
+        };
+
+        fetch('/add-customer-ajax', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(custData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.innerText = "Save Customer";
+            if(data.success) {
+                const select = document.getElementById('customerSelect');
+                const newOption = new Option(data.name, data.id);
+                select.add(newOption);
+                select.value = data.id;
+                closeModal();
+            }
+        });
+    });
+
+    // --- 4. Submission ---
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        let items = [];
+        document.querySelectorAll('#orderItemsTable tbody tr').forEach(row => {
+            items.push({
+                product_id: row.querySelector('.product-select').value,
+                qty: row.querySelector('.qty-input').value
+            });
+        });
+        
+        fetch('/add-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: document.getElementById('customerSelect').value,
+                items: items,
+                total: document.getElementById('grandTotal').innerText,
+                payment_method: document.querySelector('select[name="payment_method"]').value
+            })
+        }).then(res => res.json()).then(data => {
+            alert(data.message);
+            window.location.href = "/all/orders";
+        });
+    });
+
+    function openModal() { document.getElementById('addCustomerModal').style.display = "block"; }
+    function closeModal() { document.getElementById('addCustomerModal').style.display = "none"; }
+</script>
+{% endblock %}

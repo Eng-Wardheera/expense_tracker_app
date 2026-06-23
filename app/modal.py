@@ -11,6 +11,7 @@ class UserRole(enum.Enum):
     superadmin = "superadmin"
     admin = "admin"
     user = "user"
+    customer="customer"
 
 
 
@@ -215,42 +216,57 @@ class Cart:
 class Order:
     def __init__(self, data):
         self.data = data or {}
-
         self.id = str(self.data.get("_id"))
         self.user_id = str(self.data.get("user_id"))
-
         self.items = self.data.get("items", [])
-        self.total = self.data.get("total", 0)
-
+        self.total = float(self.data.get("total", 0))
+        
+        # Lacagaha iyo Deynta
+        self.paid_amount = float(self.data.get("paid_amount", 0))
+        self.payment_history = self.data.get("payment_history", []) # List of dicts
+        
         self.status = self.data.get("status", "pending")
-        # pending | paid | shipped | delivered | cancelled
-
-        self.payment_method = self.data.get("payment_method", "cash")
         self.payment_status = self.data.get("payment_status", "unpaid")
-
+        
+        # Xusuusinta
+        self.reminder_date = self.data.get("reminder_date") # Marka la filayo lacagta
+        
         self.created_at = self.data.get("created_at")
         self.updated_at = self.data.get("updated_at")
 
-    def is_paid(self):
-        return self.payment_status == "paid"
+    @property
+    def remaining_balance(self):
+        return self.total - self.paid_amount
+
+    def add_payment(self, amount, note=""):
+        """Habka ugu muhiimsan ee loo diiwaan galiyo lacagta cusub"""
+        amount = float(amount)
+        self.paid_amount += amount
+        self.payment_history.append({
+            "amount": amount,
+            "date": datetime.now(),
+            "note": note
+        })
+        
+        # Update status-ka haddii la dhammaystiray
+        if self.paid_amount >= self.total:
+            self.payment_status = "paid"
+        else:
+            self.payment_status = "partial" # Status cusub oo muhiim ah
 
     def to_dict(self):
         return {
             "_id": self.id,
             "user_id": self.user_id,
-            "items": self.items,
             "total": self.total,
-            "status": self.status,
-            "payment_method": self.payment_method,
+            "paid_amount": self.paid_amount,
+            "payment_history": self.payment_history,
             "payment_status": self.payment_status,
+            "remaining_balance": self.remaining_balance,
+            "reminder_date": self.reminder_date,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
-
-    def __repr__(self):
-        return f"<Order {self.id}>"
-    
-
 
 
 class Session:

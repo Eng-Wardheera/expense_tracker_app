@@ -9,7 +9,7 @@ import uuid
 
 from bson import ObjectId
 import cloudinary
-from flask import Blueprint, abort, current_app, flash, make_response, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -560,6 +560,7 @@ def edit_user(user_id):
         user=user
     )
 
+
 @bp.route('/delete-user/<user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
@@ -568,7 +569,9 @@ def delete_user(user_id):
         return abort(403)
 
     try:
-        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        user = mongo.db.users.find_one({
+            "_id": ObjectId(user_id)
+        })
     except Exception:
         flash("Invalid user ID!", "danger")
         return redirect(url_for('main.all_users'))
@@ -577,7 +580,10 @@ def delete_user(user_id):
         flash("User-ka lama helin!", "danger")
         return redirect(url_for('main.all_users'))
 
-    # ================= DELETE PHOTO (CLOUDINARY) =================
+    # ==========================================
+    # DELETE USER PHOTO FROM CLOUDINARY
+    # ==========================================
+
     photo_public_id = user.get("photo_public_id")
 
     if photo_public_id:
@@ -586,12 +592,59 @@ def delete_user(user_id):
         except Exception:
             pass
 
-    # ================= DELETE USER =================
+    # ==========================================
+    # FIND ALL USER ORDERS
+    # ==========================================
+
+    orders = list(
+        mongo.db.orders.find({
+            "user_id": ObjectId(user_id)
+        })
+    )
+
+    # ==========================================
+    # RESTORE PRODUCT STOCK
+    # ==========================================
+
+    for order in orders:
+
+        for item in order.get("items", []):
+
+            try:
+                mongo.db.products.update_one(
+                    {
+                        "_id": ObjectId(item["product_id"])
+                    },
+                    {
+                        "$inc": {
+                            "stock": int(item["qty"])
+                        }
+                    }
+                )
+            except Exception:
+                pass
+
+    # ==========================================
+    # DELETE ALL CUSTOMER ORDERS
+    # ==========================================
+
+    mongo.db.orders.delete_many({
+        "user_id": ObjectId(user_id)
+    })
+
+    # ==========================================
+    # DELETE USER
+    # ==========================================
+
     mongo.db.users.delete_one({
         "_id": ObjectId(user_id)
     })
 
-    flash("User-ka si guul leh ayaa loo tirtiray!", "success")
+    flash(
+        "Customer, orders-kiisii iyo payments-kiisii si guul leh ayaa loo tirtiray!",
+        "success"
+    )
+
     return redirect(url_for('main.all_users'))
 
 
@@ -877,6 +930,8 @@ def add_product():
         categories=categories
     )
 
+
+
 @bp.route('/all/products')
 @login_required
 def all_products():
@@ -994,6 +1049,7 @@ def edit_product(product_id):
 
 
 
+
 @bp.route('/delete-product/<product_id>', methods=['POST'])
 @login_required
 def delete_product(product_id):
@@ -1013,23 +1069,333 @@ def delete_product(product_id):
         flash("Product lama helin!", "danger")
         return redirect(url_for('main.all_products'))
 
-    # ================= DELETE CLOUDINARY IMAGE =================
+    # Product-kan ma ku jiraa orders?
+    used_in_orders = mongo.db.orders.count_documents({
+        "items.product_id": ObjectId(product_id)
+    })
+
+    if used_in_orders > 0:
+
+        # Soft delete
+        mongo.db.products.update_one(
+            {"_id": ObjectId(product_id)},
+            {
+                "$set": {
+                    "deleted": True,
+                    "status": False
+                }
+            }
+        )
+
+        flash(
+            "Product-kan wuxuu ku jiraa orders hore. Waa la qariyay laakiin lama tirtirin.",
+            "warning"
+        )
+
+        return redirect(url_for('main.all_products'))
+
+    # Cloudinary image delete
     public_id = product.get("public_id")
 
     if public_id:
         try:
             cloudinary.uploader.destroy(public_id)
         except Exception as e:
-            print("Cloudinary delete error:", e)
+            print(e)
 
-    # ================= DELETE PRODUCT =================
+    # Hard delete
     mongo.db.products.delete_one({
         "_id": ObjectId(product_id)
     })
 
     flash("Product si guul leh ayaa loo tirtiray!", "success")
+
     return redirect(url_for('main.all_products'))
 
+
+
+
+@bp.route('/add-customer-ajax', methods=['POST'])
+@login_required
+def add_customer_ajax():
+    data = request.json
+    
+    # Samee object-ka cusub ee la raacayo qaabka User class-kaaga
+    new_customer = {
+        "username": data.get('name'),
+        "fullname": data.get('name'), # Waxaan u qaadanay magaca inuu yahay fullname
+        "email": data.get('email'),
+        "phone": data.get('phone'),
+        "role": "customer",           # Si aad u kala saarto user-ka kale
+        "status": True,
+        "is_verified": False,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    # Ku kaydi database-ka (mongo.db.customers ama mongo.db.users)
+    result = mongo.db.users.insert_one(new_customer)
+    
+    return jsonify({
+        "success": True,
+        "id": str(result.inserted_id),
+        "name": data.get('name')
+    })
+
+
+
+
+@bp.route('/add-order', methods=['GET', 'POST'])
+@login_required
+def add_order():
+
+    if request.method == 'POST':
+
+        data = request.get_json()
+
+        user_id = data.get('user_id')
+        items_data = data.get('items', [])
+        payment_method = data.get('payment_method', 'cash')
+
+        if not user_id:
+            return jsonify({
+                "success": False,
+                "message": "Customer lama dooran"
+            }), 400
+
+        if not items_data:
+            return jsonify({
+                "success": False,
+                "message": "Product lama dooran"
+            }), 400
+
+        total = 0
+        items_list = []
+
+        # Validation + Stock Check
+        for item in items_data:
+
+            product = mongo.db.products.find_one({
+                "_id": ObjectId(item['product_id'])
+            })
+
+            qty = int(item['qty'])
+
+            if not product:
+                return jsonify({
+                    "success": False,
+                    "message": "Product ma jiro"
+                }), 400
+
+            if qty > int(product.get('stock', 0)):
+                return jsonify({
+                    "success": False,
+                    "message": f"Stock kuma filna {product['name']}"
+                }), 400
+
+            line_total = float(product['price']) * qty
+            total += line_total
+
+            items_list.append({
+                "product_id": ObjectId(item['product_id']),
+                "name": product['name'],
+                "price": float(product['price']),
+                "qty": qty,
+                "total": line_total
+            })
+
+        # Save Order
+        new_order = {
+            "user_id": ObjectId(user_id),
+            "items": items_list,
+            "total": total,
+            "paid_amount": 0,
+            "remaining_amount": total,
+            "payment_status": "unpaid",
+            "status": "pending",
+            "payment_method": payment_method,
+            "payment_history": [],
+            "created_at": datetime.utcnow()
+        }
+
+        order_result = mongo.db.orders.insert_one(new_order)
+
+        # Update Stock
+        for item in items_data:
+            mongo.db.products.update_one(
+                {"_id": ObjectId(item['product_id'])},
+                {"$inc": {"stock": -int(item['qty'])}}
+            )
+
+        return jsonify({
+            "success": True,
+            "message": "Order si guul leh ayaa loo sameeyay",
+            "order_id": str(order_result.inserted_id)
+        }), 201
+
+    products = list(mongo.db.products.find({"status": True}))
+    customers = list(mongo.db.users.find({"role": "customer"}))
+
+    return render_template(
+        "backend/pages/components/orders/add_order.html",
+        products=products,
+        customers=customers
+    )
+
+
+@bp.route('/all/orders')
+@login_required
+def all_orders():
+    if current_user.role not in ['superadmin', 'admin']:
+        return abort(403)
+
+    orders = []
+    # Waxaan soo saaraynaa dalabyada annagoo isticmaalayna sort si kuwii ugu dambeeyay ugu horreeyaan
+    cursor = mongo.db.orders.find().sort("created_at", -1)
+
+    for item in cursor:
+        order = Order(item)
+        
+        # Soo hel magaca user-ka dalabka sameeyay
+        user = mongo.db.users.find_one({"_id": ObjectId(order.user_id)})
+        order.customer_name = user.get("username") if user else "Unknown"
+        
+        orders.append(order)
+
+    return render_template(
+        "backend/pages/components/orders/all_orders.html",
+        orders=orders
+    )
+
+
+@bp.route('/edit-order/<order_id>', methods=['GET', 'POST'])
+@login_required
+def edit_order(order_id):
+    if current_user.role not in ['superadmin', 'admin']:
+        return abort(403)
+
+    order_data = mongo.db.orders.find_one({"_id": ObjectId(order_id)})
+    if not order_data:
+        flash("Dalabka lama helin!", "danger")
+        return redirect(url_for('main.all_orders'))
+
+    order = Order(order_data)
+
+    if request.method == 'POST':
+        # 1. Update Status & Payment Info
+        new_status = request.form.get('status')
+        new_payment_status = request.form.get('payment_status')
+        new_payment_amount = float(request.form.get('new_payment', 0))
+        note = request.form.get('note', '')
+
+        # Haddii lacag cusub la keenay
+        if new_payment_amount > 0:
+            order.add_payment(new_payment_amount, note)
+
+        # 2. Update General Fields
+        order.status = new_status
+        
+        # 3. Save to MongoDB
+        mongo.db.orders.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {
+                "status": order.status,
+                "payment_status": order.payment_status,
+                "paid_amount": order.paid_amount,
+                "payment_history": order.payment_history,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+
+        flash("Dalabka si guul leh ayaa loo cusboonaysiiyay!", "success")
+        return redirect(url_for('main.all_orders'))
+
+    return render_template("backend/pages/components/orders/edit_order.html", order=order)
+
+
+@bp.route('/delete-payment/<order_id>/<int:payment_index>', methods=['POST'])
+@login_required
+def delete_payment(order_id, payment_index):
+
+    order = mongo.db.orders.find_one({
+        "_id": ObjectId(order_id)
+    })
+
+    payment_history = order.get("payment_history", [])
+
+    if payment_index >= len(payment_history):
+        flash("Payment not found", "danger")
+        return redirect(request.referrer)
+
+    payment = payment_history[payment_index]
+
+    amount = float(payment["amount"])
+
+    payment_history.pop(payment_index)
+
+    new_paid_amount = float(order["paid_amount"]) - amount
+
+    mongo.db.orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "payment_history": payment_history,
+                "paid_amount": new_paid_amount,
+                "payment_status": "paid" if new_paid_amount >= order["total"] else "partial"
+            }
+        }
+    )
+
+    flash("Payment deleted successfully", "success")
+
+    return redirect(request.referrer)
+
+
+
+@bp.route('/delete-order/<order_id>', methods=['POST'])
+@login_required
+def delete_order(order_id):
+
+    if current_user.role not in ['superadmin', 'admin']:
+        return abort(403)
+
+    order = mongo.db.orders.find_one({
+        "_id": ObjectId(order_id)
+    })
+
+    if not order:
+        flash("Order not found!", "danger")
+        return redirect(url_for('main.all_orders'))
+
+    # Haddii lacag laga bixiyay ha la tirtirin
+    if float(order.get("paid_amount", 0)) > 0:
+        flash(
+            "Order-kan lacag ayaa laga bixiyay. Lama tirtiri karo si payment history-ga uusan u lumin.",
+            "warning"
+        )
+        return redirect(url_for('main.all_orders'))
+
+    # Stock dib ugu celi
+    for item in order.get("items", []):
+        mongo.db.products.update_one(
+            {"_id": ObjectId(item["product_id"])},
+            {"$inc": {"stock": int(item["qty"])}}
+        )
+
+    # Soft Delete
+    mongo.db.orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "deleted": True,
+                "deleted_at": datetime.utcnow(),
+                "deleted_by": str(current_user.id)
+            }
+        }
+    )
+
+    flash("Order archived successfully.", "success")
+    return redirect(url_for('main.all_orders'))
 
 
 
