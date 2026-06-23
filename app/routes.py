@@ -13,7 +13,7 @@ from flask import Blueprint, abort, current_app, flash, make_response, redirect,
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-from app import ALLOWED_EXTENSIONS
+from app import ALLOWED_EXTENSIONS, google
 from app.extensions import mongo
 from datetime import datetime, timedelta
 
@@ -189,6 +189,41 @@ def login():
 def forbidden(error):
     return render_template('frontend/errors/403.html'), 403
 
+@bp.route("/login/google")
+def login_google():
+    redirect_uri = url_for("main.google_callback", _external=True)
+    print("REDIRECT URI:", redirect_uri)
+    return google.authorize_redirect(redirect_uri)
+
+
+
+@bp.route("/google/callback")
+def google_callback():
+    token = google.authorize_access_token()
+    user_info = token.get("userinfo")
+    email = user_info.get("email")
+
+    # 1. Check if the user exists in your database
+    raw_user = mongo.db.users.find_one({"email": email})
+
+    # 2. If the user does not exist, block the login
+    if not raw_user:
+        flash("You do not have an account. Please register first.", "danger")
+        return redirect(url_for("main.login"))
+
+    # 3. Optional: Check if the account was registered via Google previously
+    # This prevents users from trying to log in with Google to an email 
+    # that was registered via standard email/password (if you prefer).
+    if raw_user.get("auth_provider") != "google":
+        # You could also choose to update their profile here instead of blocking
+        pass
+
+    # 4. Proceed with Login
+    user_obj = User(raw_user)
+    login_user(user_obj, remember=True)
+    
+    flash("Successfully logged in with Google!", "success")
+    return redirect(url_for("main.dashboard"))
 
 
 @bp.route("/dashboard")
