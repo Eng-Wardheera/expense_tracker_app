@@ -265,8 +265,6 @@ def dashboard():
     )
 
     # ================= PRODUCTS =================
-    total_products = mongo.db.products.count_documents({})
-
     # Xisaabinta: (stock * price) mid kasta oo la isku daray
     inventory_value_result = mongo.db.products.aggregate([
         {
@@ -301,7 +299,6 @@ def dashboard():
         total_orders=total_orders,
 
         recent_orders=recent_orders,
-        total_products=total_products,
         total_inventory_value=total_inventory_value
     )
 
