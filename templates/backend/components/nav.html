@@ -2,7 +2,7 @@
         <div class="navbar-wrapper">
             <div class="m-header">
                  <a href="{{ url_for('main.index') }}" class="b-brand">
-                    <img src=" {{ url_for('static', filename=settings.logo) if settings and settings.logo else  url_for('static', filename='frontend/images/logo1.png') }}" width="200" height="75" class="logo logo-lg" />
+                    <img src=" {{ url_for('static', filename='frontend/images/logo1.png') }}" width="200" height="75" class="logo logo-lg" />
                 </a>
             </div>
             <div class="navbar-content">
