@@ -3,6 +3,7 @@
 {% block title %}All Orders | Management System{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
     <div class="page-header-left d-flex align-items-center">
         <div class="page-header-title"><h5 class="m-b-10">Orders Management</h5></div>
@@ -11,6 +12,7 @@
             <li class="breadcrumb-item">All Orders</li>
         </ul>
     </div>
+
     <div class="page-header-right ms-auto">
         <a href="{{ url_for('main.add_order') }}" class="btn btn-primary">
             <i class="feather-plus me-1"></i> Add Order
@@ -20,10 +22,15 @@
 
 <div class="main-content">
     <div class="card stretch stretch-full">
-        <div class="card-header"><h5 class="card-title">Orders List</h5></div>
+        <div class="card-header">
+            <h5 class="card-title">Orders List</h5>
+        </div>
+
         <div class="card-body p-0">
             <div class="table-responsive">
+
                 <table class="table table-hover" id="orderList">
+
                     <thead class="thead-light">
                         <tr>
                             <th>#</th>
@@ -37,61 +44,106 @@
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
+
                     <tbody>
-                        {% if orders %}
-                            {% for order in orders %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td><span class="fw-bold">{{ order.customer_name }}</span></td>
-                                <td>${{ "{:,.2f}".format(order.total) }}</td>
-                                <td>${{ "{:,.2f}".format(order.paid_amount) }}</td>
-                                <td class="text-danger fw-bold">${{ "{:,.2f}".format(order.remaining_balance) }}</td>
-                                <td>
-                                    <span class="badge bg-soft-info text-info">{{ order.status|capitalize }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge {{ 'bg-success' if order.payment_status == 'paid' else 'bg-warning' }}">
-                                        {{ order.payment_status|capitalize }}
-                                    </span>
-                                </td>
-                                <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
-                                <td class="text-end">
-                                    <div class="hstack gap-1 justify-content-end">
-                                        <a href="{{ url_for('main.edit_order', order_id=order.id) }}" 
-                                           class="avatar-text avatar-md bg-soft-primary text-primary rounded-circle" 
-                                           title="Edit / Add Payment">
-                                            <i class="feather-edit"></i>
-                                        </a>
-                                        <form action="{{ url_for('main.delete_order', order_id=order.id) }}" 
-                                              method="POST" class="d-inline">
-                                            <button type="submit" 
-                                                    class="avatar-text avatar-md bg-soft-danger text-danger rounded-circle border-0"
-                                                    onclick="return confirm('Ma hubtaa inaad tirtirayso order-kan?');">
-                                                <i class="feather-trash-2"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="9" class="text-center p-5">
-                                    <i class="feather-shopping-cart fs-1 text-muted d-block mb-3"></i>
-                                    <span class="text-muted">No orders found.</span>
-                                </td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
+
+{% if orders %}
+
+    {% for order in orders %}
+    <tr>
+
+        <td>{{ loop.index }}</td>
+
+        <td>
+            <span class="fw-bold">
+                {{ order.customer_name if order.customer_name else 'Unknown' }}
+            </span>
+        </td>
+
+        <td>
+            ${{ "{:,.2f}".format(order.total or 0) }}
+        </td>
+
+        <td>
+            ${{ "{:,.2f}".format(order.paid_amount or 0) }}
+        </td>
+
+        <td class="text-danger fw-bold">
+            ${{ "{:,.2f}".format(order.remaining_balance or 0) }}
+        </td>
+
+        <td>
+            <span class="badge bg-soft-info text-info">
+                {{ order.status|capitalize if order.status else 'Pending' }}
+            </span>
+        </td>
+
+        <td>
+            <span class="badge {{ 'bg-success' if order.payment_status == 'paid' else 'bg-warning' }}">
+                {{ order.payment_status|capitalize if order.payment_status else 'Unpaid' }}
+            </span>
+        </td>
+
+        <td>
+            {% if order.created_at %}
+                {{ order.created_at.strftime('%Y-%m-%d') }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+
+        <td class="text-end">
+            <div class="hstack gap-1 justify-content-end">
+
+                <a href="{{ url_for('main.edit_order', order_id=order.id) }}"
+                   class="avatar-text avatar-md bg-soft-primary text-primary rounded-circle">
+                    <i class="feather-edit"></i>
+                </a>
+
+                <form action="{{ url_for('main.delete_order', order_id=order.id) }}"
+                      method="POST"
+                      class="d-inline">
+
+                    <button type="submit"
+                            class="avatar-text avatar-md bg-soft-danger text-danger rounded-circle border-0"
+                            onclick="return confirm('Ma hubtaa inaad tirtirayso order-kan?');">
+                        <i class="feather-trash-2"></i>
+                    </button>
+
+                </form>
+
+            </div>
+        </td>
+
+    </tr>
+    {% endfor %}
+
+{% else %}
+
+    <!-- <tr>
+        <td colspan="9" class="text-center p-5">
+            <i class="feather-shopping-cart fs-1 text-muted d-block mb-3"></i>
+            <span class="text-muted">No orders found.</span>
+        </td>
+    </tr> -->
+
+{% endif %}
+
+</tbody>
+
                 </table>
+
             </div>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
+<script>
+$(document).ready(function () {
     $('#orderList').DataTable({
         responsive: true,
         pageLength: 10,
@@ -106,14 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
             infoFiltered: "(filtered from _MAX_ total orders)"
         }
     });
-
 });
 </script>
-
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
 
 {% endblock %}

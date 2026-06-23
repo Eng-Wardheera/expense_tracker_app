@@ -1251,26 +1251,48 @@ def add_order():
 @bp.route('/all/orders')
 @login_required
 def all_orders():
+
     if current_user.role not in ['superadmin', 'admin']:
         return abort(403)
 
     orders = []
-    # Waxaan soo saaraynaa dalabyada annagoo isticmaalayna sort si kuwii ugu dambeeyay ugu horreeyaan
-    cursor = mongo.db.orders.find().sort("created_at", -1)
+
+    cursor = mongo.db.orders.find({
+        "deleted": {"$ne": True}
+    }).sort("created_at", -1)
 
     for item in cursor:
+
         order = Order(item)
-        
-        # Soo hel magaca user-ka dalabka sameeyay
-        user = mongo.db.users.find_one({"_id": ObjectId(order.user_id)})
-        order.customer_name = user.get("username") if user else "Unknown"
-        
+
+        # =========================
+        # SAFE USER FETCH
+        # =========================
+        user = None
+
+        try:
+            if order.user_id:
+                user = mongo.db.users.find_one({
+                    "_id": ObjectId(order.user_id)
+                })
+        except Exception:
+            user = None
+
+        order.customer_name = user.get("username") if user and user.get("username") else "Unknown"
+
+        # =========================
+        # SAFE CREATED_AT
+        # =========================
+        if not order.created_at:
+            order.created_at = None
+
         orders.append(order)
 
     return render_template(
         "backend/pages/components/orders/all_orders.html",
         orders=orders
     )
+
 
 
 @bp.route('/edit-order/<order_id>', methods=['GET', 'POST'])
