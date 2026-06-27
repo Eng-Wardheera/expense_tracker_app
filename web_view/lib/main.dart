@@ -5,7 +5,7 @@ const String appTitle = 'Maareeye Expense Tracker';
 
 const String baseUrl = String.fromEnvironment(
   'BASE_URL',
-  defaultValue: 'https://maareye.vercel.app/login',
+  defaultValue: 'https://maareeye-online.vercel.app/login',
 );
 
 void main() {
