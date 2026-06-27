@@ -11,7 +11,6 @@ class UserRole(enum.Enum):
     superadmin = "superadmin"
     admin = "admin"
     user = "user"
-    customer="customer"
 
 
 
@@ -109,165 +108,6 @@ class User(UserMixin):
         return f"<User {self.username}>"
 
 
-class Category:
-    def __init__(self, data):
-        self.data = data or {}
-
-        self.id = str(self.data.get("_id"))
-        self.name = self.data.get("name")
-        self.image = self.data.get("image")
-        self.created_at = self.data.get("created_at")
-        self.updated_at = self.data.get("updated_at")
-
-    def to_dict(self):
-        return {
-            "_id": self.id,
-            "name": self.name,
-            "image": self.image,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
-
-    def __repr__(self):
-        return f"<Category {self.name}>"
-
-
-class Product:
-    def __init__(self, data):
-        self.data = data or {}
-
-        self.id = str(self.data.get("_id"))
-        self.category_id = str(self.data.get("category_id"))
-
-        self.name = self.data.get("name")
-        self.description = self.data.get("description")
-        self.price = self.data.get("price", 0)
-        self.stock = self.data.get("stock", 0)
-        self.image = self.data.get("image")
-
-        # Optional advanced fields
-        self.brand = self.data.get("brand")
-        self.sku = self.data.get("sku")
-        self.status = self.data.get("status", True)
-        self.created_at = self.data.get("created_at")
-        self.updated_at = self.data.get("updated_at")
-
-
-    def is_in_stock(self):
-        return self.stock > 0
-
-    def reduce_stock(self, qty=1):
-        if self.stock >= qty:
-            self.stock -= qty
-
-    def to_dict(self):
-        return {
-            "_id": self.id,
-            "category_id": self.category_id,
-            "name": self.name,
-            "description": self.description,
-            "price": self.price,
-            "stock": self.stock,
-            "image": self.image,
-            "brand": self.brand,
-            "sku": self.sku,
-            "status": self.status,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-
-        }
-
-    def __repr__(self):
-        return f"<Product {self.name}>"
-    
-
-class Cart:
-    def __init__(self, data):
-        self.data = data or {}
-
-        self.id = str(self.data.get("_id"))
-        self.user_id = str(self.data.get("user_id"))
-
-        self.items = self.data.get("items", [])  
-        # items = [{"product_id": "...", "qty": 2, "price": 25}]
-
-        self.created_at = self.data.get("created_at")
-        self.updated_at = self.data.get("updated_at")
-
-    def total_price(self):
-        return sum(item["qty"] * item["price"] for item in self.items)
-
-    def total_items(self):
-        return sum(item["qty"] for item in self.items)
-
-    def to_dict(self):
-        return {
-            "_id": self.id,
-            "user_id": self.user_id,
-            "items": self.items,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
-
-    def __repr__(self):
-        return f"<Cart {self.user_id}>"
-    
-
-class Order:
-    def __init__(self, data):
-        self.data = data or {}
-        self.id = str(self.data.get("_id"))
-        self.user_id = str(self.data.get("user_id"))
-        self.items = self.data.get("items", [])
-        self.total = float(self.data.get("total", 0))
-        
-        # Lacagaha iyo Deynta
-        self.paid_amount = float(self.data.get("paid_amount", 0))
-        self.payment_history = self.data.get("payment_history", []) # List of dicts
-        
-        self.status = self.data.get("status", "pending")
-        self.payment_status = self.data.get("payment_status", "unpaid")
-        
-        # Xusuusinta
-        self.reminder_date = self.data.get("reminder_date") # Marka la filayo lacagta
-        
-        self.created_at = self.data.get("created_at")
-        self.updated_at = self.data.get("updated_at")
-
-    @property
-    def remaining_balance(self):
-        return self.total - self.paid_amount
-
-    def add_payment(self, amount, note=""):
-        """Habka ugu muhiimsan ee loo diiwaan galiyo lacagta cusub"""
-        amount = float(amount)
-        self.paid_amount += amount
-        self.payment_history.append({
-            "amount": amount,
-            "date": datetime.now(),
-            "note": note
-        })
-        
-        # Update status-ka haddii la dhammaystiray
-        if self.paid_amount >= self.total:
-            self.payment_status = "paid"
-        else:
-            self.payment_status = "partial" # Status cusub oo muhiim ah
-
-    def to_dict(self):
-        return {
-            "_id": self.id,
-            "user_id": self.user_id,
-            "total": self.total,
-            "paid_amount": self.paid_amount,
-            "payment_history": self.payment_history,
-            "payment_status": self.payment_status,
-            "remaining_balance": self.remaining_balance,
-            "reminder_date": self.reminder_date,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
-
 
 class Session:
     def __init__(self, data):
@@ -305,5 +145,15 @@ class Session:
 
     def __repr__(self):
         return f"<Session {self.session_token}>"
+
+
+
+
+
+
+
+
+
+
 
 
