@@ -85,7 +85,7 @@ def register():
 
         # 3. Role Logic
         user_count = mongo.db.users.count_documents({})
-        role = UserRole.superadmin.value if user_count == 0 else UserRole.user.value
+        role = UserRole.superadmin.value if user_count == 0 else UserRole.admin.value
 
         # 4. Save
         new_user = {
@@ -94,7 +94,7 @@ def register():
             "email": email,
             "password": generate_password_hash(password),
             "role": role,
-            "status": False,
+            "status": True,
             "created_at": datetime.utcnow()
         }
         mongo.db.users.insert_one(new_user)
