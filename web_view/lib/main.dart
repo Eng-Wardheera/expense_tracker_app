@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-const String appTitle = 'Homeland Real Estate';
+const String appTitle = 'Maareeye Expense Tracker';
 
-// 🔥 Use correct base URL (NO trailing slash recommended)
 const String baseUrl = String.fromEnvironment(
   'BASE_URL',
-  defaultValue: 'http://10.238.211.90:7000',
+  defaultValue: 'https://maareye.vercel.app/login',
 );
 
 void main() {
@@ -50,50 +49,28 @@ class _HomelandWebViewState extends State<HomelandWebView> {
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      // 🔥 FIX: Google Login wuxuu u baahan yahay User Agent casri ah
+      ..setUserAgent('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36')
       ..setBackgroundColor(Colors.white)
-      // 🔥 IMPORTANT: allow all navigation (fix detail page issue)
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (progress) {
-            if (mounted) {
-              setState(() {
-                _progress = progress;
-              });
-            }
+            if (mounted) setState(() => _progress = progress);
           },
-
           onPageStarted: (url) {
-            if (mounted) {
-              setState(() {
-                _hasError = false;
-                _progress = 0;
-              });
-            }
+            if (mounted) setState(() => _hasError = false);
           },
-
           onPageFinished: (url) {
-            if (mounted) {
-              setState(() {
-                _progress = 100;
-              });
-            }
+            if (mounted) setState(() => _progress = 100);
           },
-
           onWebResourceError: (error) {
-            if (mounted) {
-              setState(() {
-                _hasError = true;
-              });
-            }
+            if (mounted) setState(() => _hasError = true);
           },
-
-          // 🔥 CRITICAL FIX: allow ALL links (property detail included)
           onNavigationRequest: (NavigationRequest request) {
             return NavigationDecision.navigate;
           },
         ),
       )
-      // 🔥 LOAD MAIN PAGE
       ..loadRequest(Uri.parse(baseUrl));
   }
 
@@ -111,16 +88,14 @@ class _HomelandWebViewState extends State<HomelandWebView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-
         final shouldPop = await _onBackPressed();
-
         if (shouldPop && context.mounted) {
           Navigator.of(context).maybePop();
         }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Homeland Real Estate"),
+          title: const Text(appTitle),
           centerTitle: true,
           actions: [
             IconButton(
@@ -133,18 +108,10 @@ class _HomelandWebViewState extends State<HomelandWebView> {
           child: Stack(
             children: [
               WebViewWidget(controller: _controller),
-
-              // 🔵 Loading bar
               if (_progress < 100)
                 LinearProgressIndicator(value: _progress / 100, minHeight: 3),
-
-              // 🔴 Error screen
               if (_hasError)
-                _ConnectionError(
-                  onRetry: () {
-                    _controller.reload();
-                  },
-                ),
+                _ConnectionError(onRetry: () => _controller.reload()),
             ],
           ),
         ),
@@ -155,7 +122,6 @@ class _HomelandWebViewState extends State<HomelandWebView> {
 
 class _ConnectionError extends StatelessWidget {
   final VoidCallback onRetry;
-
   const _ConnectionError({required this.onRetry});
 
   @override
@@ -167,29 +133,14 @@ class _ConnectionError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.home_work_outlined, size: 70, color: Colors.blue),
-
+          const Icon(Icons.error_outline, size: 70, color: Colors.red),
           const SizedBox(height: 20),
-
-          const Text(
-            'Unable to connect to Homeland Real Estate System',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-
+          const Text('Khalad baa dhacay', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
-          const Text(
-            'Check Flask server (host=0.0.0.0, port=7000) and network access.',
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 25),
-
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry Connection'),
+            label: const Text('Isku day mar kale'),
           ),
         ],
       ),
